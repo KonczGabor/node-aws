@@ -16,13 +16,15 @@ app.use(express.json());
 
 // Routes
 app.get('/users', async (req, res) => {
-    try {
-        const { rows } = await pool.query('SELECT * FROM my_users');
-        res.json(rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal Server Error' });
-    }
+    // try {
+    //     const { rows } = await pool.query('SELECT * FROM my_users');
+    //     res.json(rows);
+    // } catch (err) {
+    //     console.error(err);
+    //     res.status(500).json({ message: 'Internal Server Error' });
+    // }
+
+    res.json("sajt")
 });
 
 app.post('/users', async (req, res) => {
