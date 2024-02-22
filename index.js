@@ -4,6 +4,12 @@ const AWS = require('aws-sdk');
 const crypto = require('crypto');
 const { promisify } = require('util');
 
+const { encryptData } = require('./encrypt');
+const { decryptData } = require('./decrypt');
+
+const keyId = 'arn:aws:kms:eu-central-1:693208135292:key/17cb2ff1-ea1c-45f4-8204-56fd25ec4983'; // Replace with your CMK ARN
+const originalText = 'Hello, KMS!'
+
 // Configure the region and credentials
 AWS.config.update({ region: 'eu-central-1' });
 
@@ -25,31 +31,8 @@ const pool = new Pool({
     port: 5432,
 });
 
-async function encryptData(plaintext) {
-    try {
-        // Generate a data key
-        const dataKey = await kms.generateDataKey({
-            KeyId: 'arn:aws:kms:eu-central-1:693208135292:key/17cb2ff1-ea1c-45f4-8204-56fd25ec4983',
-            KeySpec: 'AES_256',
-        }).promise();
-
-        // Generate a random initialization vector
-        const iv = await randomBytesAsync(16);
-
-        // Encrypt the data using the plaintext data key and iv
-        const cipher = crypto.createCipheriv('aes-256-cbc', dataKey.Plaintext, iv);
-        let encrypted = cipher.update(plaintext, 'utf8', 'base64');
-        encrypted += cipher.final('base64');
-
-        // Concatenate the iv and the encrypted data Key
-        // You will need to store these along with the encrypted data
-        const encryptedBuffer = Buffer.concat([iv, Buffer.from(encrypted, 'base64'), dataKey.CiphertextBlob]);
-
-        return encryptedBuffer.toString('base64');
-    } catch (err) {
-        console.error('Encryption error:', err);
-        throw err;
-    }
+async function valami(plaintext) {
+   return await encryptData(keyId, plaintext);
 }
 
 app.use(express.json());
@@ -64,7 +47,7 @@ app.get('/users', async (req, res) => {
     //     res.status(500).json({ message: 'Internal Server Error' });
     // }
 
-    let encSajt = await encryptData("sajt")
+    let encSajt = await valami("sajt")
 
     res.json(encSajt)
 });
