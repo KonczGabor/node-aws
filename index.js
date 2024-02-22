@@ -25,9 +25,6 @@ const pool = new Pool({
     port: 5432,
 });
 
-async function valami(plaintext) {
-   return await encryptData(keyId, plaintext);
-}
 
 app.use(express.json());
 
@@ -41,7 +38,7 @@ app.get('/enc', async (req, res) => {
     //     res.status(500).json({ message: 'Internal Server Error' });
     // }
 
-    let encSajt = await valami("sajt")
+    let encSajt = await encryptData(keyId, "sajt");
 
     res.json(encSajt)
 });
