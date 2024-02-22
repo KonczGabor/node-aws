@@ -1,8 +1,21 @@
 const express = require('express');
 const { Pool } = require('pg');
+const AWS = require('aws-sdk');
+const crypto = require('crypto');
+const { promisify } = require('util');
+
+// Configure the region and credentials
+AWS.config.update({ region: 'eu-central-1' });
+
+// Create a KMS client
+const kms = new AWS.KMS({ apiVersion: '2014-11-01' });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Use promisify to use async/await with crypto functions
+const randomBytesAsync = promisify(crypto.randomBytes);
+const pbkdf2Async = promisify(crypto.pbkdf2);
 
 const pool = new Pool({
     user: 'postgres',
@@ -11,6 +24,33 @@ const pool = new Pool({
     password: 'postgres',
     port: 5432,
 });
+
+async function encryptData(plaintext) {
+    try {
+        // Generate a data key
+        const dataKey = await kms.generateDataKey({
+            KeyId: 'arn:aws:kms:eu-central-1:693208135292:key/17cb2ff1-ea1c-45f4-8204-56fd25ec4983',
+            KeySpec: 'AES_256',
+        }).promise();
+
+        // Generate a random initialization vector
+        const iv = await randomBytesAsync(16);
+
+        // Encrypt the data using the plaintext data key and iv
+        const cipher = crypto.createCipheriv('aes-256-cbc', dataKey.Plaintext, iv);
+        let encrypted = cipher.update(plaintext, 'utf8', 'base64');
+        encrypted += cipher.final('base64');
+
+        // Concatenate the iv and the encrypted data Key
+        // You will need to store these along with the encrypted data
+        const encryptedBuffer = Buffer.concat([iv, Buffer.from(encrypted, 'base64'), dataKey.CiphertextBlob]);
+
+        return encryptedBuffer.toString('base64');
+    } catch (err) {
+        console.error('Encryption error:', err);
+        throw err;
+    }
+}
 
 app.use(express.json());
 
@@ -24,7 +64,9 @@ app.get('/users', async (req, res) => {
     //     res.status(500).json({ message: 'Internal Server Error' });
     // }
 
-    res.json("sajt")
+    let encSajt = await encryptData("sajt")
+
+    res.json(encSajt)
 });
 
 app.post('/users', async (req, res) => {
