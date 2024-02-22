@@ -1,27 +1,21 @@
 const express = require('express');
 const { Pool } = require('pg');
-const AWS = require('aws-sdk');
-const crypto = require('crypto');
-const { promisify } = require('util');
+
 
 const { encryptData } = require('./encrypt');
 const { decryptData } = require('./decrypt');
 
-const keyId = 'arn:aws:kms:eu-central-1:693208135292:key/17cb2ff1-ea1c-45f4-8204-56fd25ec4983'; // Replace with your CMK ARN
-const originalText = 'Hello, KMS!'
+
 
 // Configure the region and credentials
-AWS.config.update({ region: 'eu-central-1' });
 
-// Create a KMS client
-const kms = new AWS.KMS({ apiVersion: '2014-11-01' });
+const keyId = 'arn:aws:kms:eu-central-1:693208135292:key/17cb2ff1-ea1c-45f4-8204-56fd25ec4983'; // Replace with your CMK ARN
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Use promisify to use async/await with crypto functions
-const randomBytesAsync = promisify(crypto.randomBytes);
-const pbkdf2Async = promisify(crypto.pbkdf2);
+
 
 const pool = new Pool({
     user: 'postgres',
