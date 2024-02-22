@@ -54,7 +54,7 @@ app.get('/dec', async (req, res) => {
 
     let encSajt = await encryptData(keyId, "sajt");
 
-    let decSajt = await decryptData(encSajt)
+    let decSajt = await decryptData(Buffer.from(encSajt, 'base64'))
 
     res.json(decSajt)
 });
